@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoodNFT Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .output {
+            margin-top: 20px;
+        }
+
+        .metadata {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .error {
+            color: red;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎭 MoodNFT Token URI Viewer</h1>
+
+        <label for="tokenUri"><strong>Paste Token URI here:</strong></label>
+        <textarea id="tokenUri" placeholder="data:application/json;base64,eyJuYW1l..."></textarea>
+
+        <button onclick="decodeTokenURI()">Decode Token URI</button>
+
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        function decodeTokenURI() {
+            const tokenUri = document.getElementById('tokenUri').value.trim();
+            const output = document.getElementById('output');
+
+            try {
+                // Check if it's a data URI
+                if (!tokenUri.startsWith('data:application/json;base64,')) {
+                    throw new Error('Token URI must start with "data:application/json;base64,"');
+                }
+
+                // Extract base64 part
+                const base64Data = tokenUri.replace('data:application/json;base64,', '');
+
+                // Decode base64
+                const decodedJson = atob(base64Data);
+
+                // Parse JSON
+                const metadata = JSON.parse(decodedJson);
+
+                // Display results
+                let html = '<div class="metadata">';
+                html += '<h2>' + metadata.name + '</h2>';
+                html += '<p><strong>Description:</strong> ' + metadata.description + '</p>';
+
+                if (metadata.attributes) {
+                    html += '<p><strong>Attributes:</strong></p><ul>';
+                    metadata.attributes.forEach(attr => {
+                        html += '<li>' + attr.trait_type + ': ' + attr.value + '</li>';
+                    });
+                    html += '</ul>';
+                }
+
+                html += '</div>';
+
+                // Display image if it's a data URI
+                if (metadata.image && metadata.image.startsWith('data:image/svg+xml;base64,')) {
+                    const svgBase64 = metadata.image.replace('data:image/svg+xml;base64,', '');
+                    const svgData = atob(svgBase64);
+
+                    html += '<div class="image-container">';
+                    html += '<h3>NFT Image:</h3>';
+                    html += '<img src="' + metadata.image + '" alt="NFT Image" />';
+                    html += '</div>';
+
+                    html += '<details><summary><strong>SVG Source Code</strong></summary>';
+                    html += '<pre>' + escapeHtml(svgData) + '</pre>';
+                    html += '</details>';
+                }
+
+                html += '<details style="margin-top: 20px;"><summary><strong>Full Metadata JSON</strong></summary>';
+                html += '<pre>' + JSON.stringify(metadata, null, 2) + '</pre>';
+                html += '</details>';
+
+                output.innerHTML = html;
+
+            } catch (error) {
+                output.innerHTML = '<div class="error"><strong>Error:</strong> ' + error.message + '</div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Auto-populate if there's data in the URL hash
+        window.onload = function () {
+            if (window.location.hash) {
+                const data = decodeURIComponent(window.location.hash.substring(1));
+                document.getElementById('tokenUri').value = data;
+                decodeTokenURI();
+            }
+        };
+    </script>
+</body>
+
+</html>
