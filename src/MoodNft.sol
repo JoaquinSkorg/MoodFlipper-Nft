@@ -19,10 +19,7 @@ contract MoodNft is ERC721 {
         HAPPY
     }
 
-    constructor(
-        string memory sadSvgImageURI,
-        string memory happySvgImageURI
-    ) ERC721("MoodNft", "MOOD") {
+    constructor(string memory sadSvgImageURI, string memory happySvgImageURI) ERC721("MoodNft", "MOOD") {
         s_tokenCounter = 0;
         s_sadSvgImageURI = sadSvgImageURI;
         s_happySvgImageURI = happySvgImageURI;
@@ -36,12 +33,12 @@ contract MoodNft is ERC721 {
     function _baseURI() internal pure override returns (string memory) {
         return "data:application/json;base64,";
     }
+
     function flipMood(uint256 tokenId) public {
         // only the owner of the token can flip its mood
         if (
-            ownerOf(tokenId) != msg.sender &&
-            !isApprovedForAll(ownerOf(tokenId), msg.sender) &&
-            getApproved(tokenId) != msg.sender
+            ownerOf(tokenId) != msg.sender && !isApprovedForAll(ownerOf(tokenId), msg.sender)
+                && getApproved(tokenId) != msg.sender
         ) {
             revert MoodNft__CantFlipMoodIfNotOwner();
         }
@@ -51,9 +48,8 @@ contract MoodNft is ERC721 {
             s_tokenIdToMood[tokenId] = Mood.SAD;
         }
     }
-    function tokenURI(
-        uint256 tokenId
-    ) public view override returns (string memory) {
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
         string memory imageURI;
         if (s_tokenIdToMood[tokenId] == Mood.SAD) {
             imageURI = s_sadSvgImageURI;
@@ -61,22 +57,21 @@ contract MoodNft is ERC721 {
             imageURI = s_happySvgImageURI;
         }
 
-        return
-            string(
-                abi.encodePacked(
-                    _baseURI(),
-                    Base64.encode(
-                        bytes(
-                            abi.encodePacked(
-                                '{"name": "',
-                                name(),
-                                '", "description": "An NFT that reflects the owners mood.", "attributes": [{"trait_type": "moodiness", "value": 100}], "image": "',
-                                imageURI,
-                                '"}'
-                            )
+        return string(
+            abi.encodePacked(
+                _baseURI(),
+                Base64.encode(
+                    bytes(
+                        abi.encodePacked(
+                            '{"name": "',
+                            name(),
+                            '", "description": "An NFT that reflects the owners mood.", "attributes": [{"trait_type": "moodiness", "value": 100}], "image": "',
+                            imageURI,
+                            '"}'
                         )
                     )
                 )
-            );
+            )
+        );
     }
 }
